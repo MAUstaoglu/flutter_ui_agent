@@ -1,0 +1,39 @@
+/// Configuration for the Flutter UI Agent example
+///
+/// This file is in .gitignore and will NOT be committed to Git.
+/// See app_config.dart.example for setup instructions.
+class AppConfig {
+  /// Which LLM provider to use: 'gemini', 'huggingface', or 'mock'
+  static const String llmProvider =
+      'gemini'; // Options: 'gemini', 'huggingface', 'mock'
+
+  // ========== GEMINI CONFIGURATION ==========
+
+  /// Gemini API Key
+  /// Get your free API key from: https://aistudio.google.com/app/apikey
+  static const String geminiApiKey = 'YOUR_GEMINI_API_KEY_HERE';
+
+  /// Gemini model to use
+  /// Tested models:
+  /// - 'gemini-2.0-flash-exp' -  ✅ TESTED
+  static const String geminiModel = 'gemini-2.0-flash-exp';
+
+  // ========== HUGGINGFACE CONFIGURATION ==========
+
+  /// HuggingFace API Key
+  /// Get your free API key from: https://huggingface.co/settings/tokens
+  static const String huggingfaceApiKey = 'YOUR_HUGGINGFACE_API_KEY_HERE';
+
+  /// HuggingFace model to use
+  ///
+  /// Tested models (ensure you have the provider enabled):
+  /// - 'Qwen/Qwen2.5-72B-Instruct' - ✅ TESTED
+
+  ///
+  /// Note: Visit https://huggingface.co/settings/inference-providers
+  /// to enable providers that support your chosen model.
+  static const String huggingfaceModel = 'Qwen/Qwen2.5-72B-Instruct';
+}
+
+
+

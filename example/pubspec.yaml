@@ -1,0 +1,23 @@
+name: flutter_ui_agent_example
+description: Example app demonstrating the Flutter UI Agent package.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_ui_agent:
+    path: ../
+  google_generative_ai: ^0.4.6
+  http: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
