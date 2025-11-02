@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.0-beta.2] - 2025-11-02
+
+### 🔧 Fixes
+- Fixed demo GIF display on pub.dev by using absolute GitHub URL instead of relative path
+
 ## [0.1.0-beta.1] - 2025-01-30
 
 ### 🎉 Initial Beta Release

@@ -30,13 +30,6 @@ class AgentNavigatorObserver extends NavigatorObserver {
     }
   }
 
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {
-    super.didRemove(route, previousRoute);
-    // Don't update current page on remove - we're just cleaning up the stack
-    // The actual navigation is handled by didPush/didPop
-  }
-
   void _updateCurrentPage(Route<dynamic> route) {
     final routeName = route.settings.name;
 

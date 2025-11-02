@@ -1,6 +1,6 @@
 name: flutter_ui_agent
-description: Enable AI agents to interact with your Flutter app using natural language. Supports LLM function calling, dynamic action registration, async operations, and smart navigation tracking.
-version: 0.1.0-beta.1
+description: Control your Flutter app with natural language. AI-powered widget interactions with LLM function calling and smart navigation.
+version: 0.1.0-beta.2
 homepage: https://github.com/MAUstaoglu/flutter_ui_agent
 repository: https://github.com/MAUstaoglu/flutter_ui_agent
 issue_tracker: https://github.com/MAUstaoglu/flutter_ui_agent/issues

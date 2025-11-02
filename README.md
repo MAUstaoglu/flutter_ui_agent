@@ -22,7 +22,7 @@ Flutter UI Agent lets users control your app using natural language instead of t
 ```
 
 <div align="center">
-  <img src="assets/flutter_ui_agent.gif" alt="Flutter UI Agent Demo" width="600"/>
+  <img src="https://raw.githubusercontent.com/MAUstaoglu/flutter_ui_agent/main/assets/flutter_ui_agent.gif" alt="Flutter UI Agent Demo" width="600"/>
   <p><em>AI Agent controlling a Flutter app with natural language commands</em></p>
 </div>
 
