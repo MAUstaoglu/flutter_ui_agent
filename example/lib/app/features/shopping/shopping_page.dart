@@ -378,7 +378,12 @@ class _ShoppingPageState extends State<ShoppingPage> {
             child: AiActionWidget(
               actionId: 'search_products',
               description: 'Search for products by name, category, or color',
-              parameters: const {'query': 'string'},
+              parameters: const [
+                AgentActionParameter.string(
+                  name: 'query',
+                  description: 'Search keywords or category name',
+                ),
+              ],
               immediateRegistration: true,
               onExecuteWithParams: (params) {
                 final query = params['query'] as String;
@@ -439,7 +444,20 @@ class _ShoppingPageState extends State<ShoppingPage> {
               actionId: 'filter_by_color',
               description:
                   'Filter products by color (red, blue, black, white, gray, silver)',
-              parameters: const {'color': 'string'},
+              parameters: const [
+                AgentActionParameter.string(
+                  name: 'color',
+                  description: 'Color to filter by',
+                  enumValues: [
+                    'red',
+                    'blue',
+                    'black',
+                    'white',
+                    'gray',
+                    'silver',
+                  ],
+                ),
+              ],
               immediateRegistration: true,
               onExecuteWithParams: (params) {
                 final color = params['color'] as String;
@@ -477,7 +495,14 @@ class _ShoppingPageState extends State<ShoppingPage> {
             child: AiActionWidget(
               actionId: 'filter_by_price',
               description: 'Filter products by maximum price',
-              parameters: const {'maxPrice': 'number'},
+              parameters: const [
+                AgentActionParameter.number(
+                  name: 'maxPrice',
+                  description: 'Maximum acceptable price',
+                  min: 0,
+                  max: 500,
+                ),
+              ],
               immediateRegistration: true,
               onExecuteWithParams: (params) {
                 final maxPrice = (params['maxPrice'] as num).toDouble();
@@ -515,7 +540,18 @@ class _ShoppingPageState extends State<ShoppingPage> {
               actionId: 'sort_products',
               description:
                   'Sort products by name, price_low, price_high, or rating',
-              parameters: const {'sortBy': 'string'},
+              parameters: const [
+                AgentActionParameter.string(
+                  name: 'sortBy',
+                  description: 'Sorting method',
+                  enumValues: [
+                    'name',
+                    'price_low',
+                    'price_high',
+                    'rating',
+                  ],
+                ),
+              ],
               immediateRegistration: true,
               onExecuteWithParams: (params) {
                 final sortBy = params['sortBy'] as String;
@@ -638,7 +674,14 @@ class _ShoppingPageState extends State<ShoppingPage> {
             actionId:
                 'add_${product.name.toLowerCase().replaceAll(' ', '_')}_to_cart',
             description: 'Add ${product.name} to cart',
-            parameters: const {'quantity': 'number'},
+            parameters: const [
+              AgentActionParameter.integer(
+                name: 'quantity',
+                description: 'Number of units to add',
+                min: 1,
+                defaultValue: 1,
+              ),
+            ],
             immediateRegistration: true,
             onExecuteWithParams: (params) {
               final quantity = params['quantity'] as int? ?? 1;
@@ -788,7 +831,13 @@ class _ShoppingPageState extends State<ShoppingPage> {
                       actionId: 'apply_coupon',
                       description:
                           'Apply a discount coupon code (SAVE20, SAVE10, SAVE5)',
-                      parameters: const {'code': 'string'},
+                      parameters: const [
+                        AgentActionParameter.string(
+                          name: 'code',
+                          description: 'Coupon code to apply',
+                          enumValues: ['SAVE20', 'SAVE10', 'SAVE5'],
+                        ),
+                      ],
                       immediateRegistration: true,
                       onExecuteWithParams: (params) {
                         final code = params['code'] as String;

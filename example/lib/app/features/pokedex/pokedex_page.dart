@@ -266,9 +266,12 @@ class _PokedexPageState extends State<PokedexPage> {
                   immediateRegistration:
                       true, // Keep registered even during rebuilds
                   description: 'Search for a specific Pokemon by name or ID',
-                  parameters: {
-                    'name': 'string',
-                  },
+                  parameters: const [
+                    AgentActionParameter.string(
+                      name: 'name',
+                      description: 'Pokemon name or Pokédex ID',
+                    ),
+                  ],
                   onExecuteWithParams: (params) {
                     final name = params['name'] as String?;
                     if (name != null && name.isNotEmpty) {
@@ -296,9 +299,12 @@ class _PokedexPageState extends State<PokedexPage> {
                       true, // Keep registered even during rebuilds
                   description:
                       'Search for and show detailed information about a specific Pokemon by name (e.g., Pikachu, Charmander, Bulbasaur, Squirtle)',
-                  parameters: {
-                    'name': 'string',
-                  },
+                  parameters: const [
+                    AgentActionParameter.string(
+                      name: 'name',
+                      description: 'Pokemon name to display',
+                    ),
+                  ],
                   onExecuteWithParams: (params) async {
                     final name = params['name'] as String?;
                     if (name != null && name.isNotEmpty) {

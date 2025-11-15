@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.0] - 2025-11-15
+
+### 🚀 First Stable Release
+- Graduated from beta to the first stable release of Flutter UI Agent.
+- Standardized action parameters with the new `AgentActionParameter` model, including enum hints, numeric ranges, and prompt metadata shared with LLM tools.
+- Added runtime validation for tool calls to block invalid or unknown parameters before they reach the UI.
+- Made the optional `count` argument opt-in via `allowRepeats`, keeping tool schemas lean unless an action truly supports repetition.
+- Updated the example app and README to showcase typed parameters, enum options, and repeatable actions.
+
 ## [0.1.0-beta.2] - 2025-11-02
 
 ### 🔧 Fixes

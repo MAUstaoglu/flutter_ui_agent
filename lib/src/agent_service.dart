@@ -104,6 +104,154 @@ class ConversationMessage {
   });
 }
 
+/// Supported parameter types for agent actions
+enum AgentParameterType {
+  string,
+  number,
+  integer,
+  boolean,
+}
+
+extension _AgentParameterTypeX on AgentParameterType {
+  String get jsonType => switch (this) {
+        AgentParameterType.string => 'string',
+        AgentParameterType.number => 'number',
+        AgentParameterType.integer => 'integer',
+        AgentParameterType.boolean => 'boolean',
+      };
+
+  String get displayName => switch (this) {
+        AgentParameterType.string => 'text',
+        AgentParameterType.number => 'number',
+        AgentParameterType.integer => 'whole number',
+        AgentParameterType.boolean => 'true/false',
+      };
+}
+
+/// Metadata describing a parameter that an agent action accepts
+class AgentActionParameter {
+  final String name;
+  final AgentParameterType type;
+  final String description;
+  final bool isRequired;
+  final bool nullable;
+  final List<String> enumValues;
+  final num? min;
+  final num? max;
+  final Object? defaultValue;
+
+  const AgentActionParameter({
+    required this.name,
+    required this.type,
+    this.description = '',
+    this.isRequired = true,
+    this.nullable = false,
+    this.enumValues = const [],
+    this.min,
+    this.max,
+    this.defaultValue,
+  });
+
+  const AgentActionParameter.string({
+    required String name,
+    String description = '',
+    bool isRequired = true,
+    bool nullable = false,
+    List<String> enumValues = const [],
+    Object? defaultValue,
+  }) : this(
+          name: name,
+          type: AgentParameterType.string,
+          description: description,
+          isRequired: isRequired,
+          nullable: nullable,
+          enumValues: enumValues,
+          defaultValue: defaultValue,
+        );
+
+  const AgentActionParameter.number({
+    required String name,
+    String description = '',
+    bool isRequired = true,
+    bool nullable = false,
+    num? min,
+    num? max,
+    Object? defaultValue,
+  }) : this(
+          name: name,
+          type: AgentParameterType.number,
+          description: description,
+          isRequired: isRequired,
+          nullable: nullable,
+          min: min,
+          max: max,
+          defaultValue: defaultValue,
+        );
+
+  const AgentActionParameter.integer({
+    required String name,
+    String description = '',
+    bool isRequired = true,
+    bool nullable = false,
+    int? min,
+    int? max,
+    Object? defaultValue,
+  }) : this(
+          name: name,
+          type: AgentParameterType.integer,
+          description: description,
+          isRequired: isRequired,
+          nullable: nullable,
+          min: min,
+          max: max,
+          defaultValue: defaultValue,
+        );
+
+  const AgentActionParameter.boolean({
+    required String name,
+    String description = '',
+    bool isRequired = true,
+    bool nullable = false,
+    Object? defaultValue,
+  }) : this(
+          name: name,
+          type: AgentParameterType.boolean,
+          description: description,
+          isRequired: isRequired,
+          nullable: nullable,
+          defaultValue: defaultValue,
+        );
+
+  Map<String, dynamic> toJsonSchema() {
+    final schema = <String, dynamic>{
+      'type': type.jsonType,
+      'description':
+          description.isNotEmpty ? description : 'The $name parameter',
+    };
+    if (nullable) schema['nullable'] = true;
+    if (enumValues.isNotEmpty) schema['enum'] = enumValues;
+    if (min != null) schema['minimum'] = min;
+    if (max != null) schema['maximum'] = max;
+    if (defaultValue != null) schema['default'] = defaultValue;
+    return schema;
+  }
+
+  String promptHint() {
+    final buffer = StringBuffer(name);
+    buffer.write(' (${type.displayName}');
+    if (enumValues.isNotEmpty) {
+      buffer.write(': ${enumValues.join(", ")}');
+    }
+    if (min != null || max != null) {
+      buffer.write(' range');
+      if (min != null) buffer.write(' ≥ $min');
+      if (max != null) buffer.write(' ≤ $max');
+    }
+    buffer.write(')');
+    return buffer.toString();
+  }
+}
+
 /// Represents an action that the agent can execute
 class AgentAction {
   final String actionId;
@@ -112,7 +260,8 @@ class AgentAction {
   final Function(Map<String, dynamic>)? onExecuteWithParams;
   final Future<void> Function()? onExecuteAsync;
   final Future<void> Function(Map<String, dynamic>)? onExecuteWithParamsAsync;
-  final Map<String, String>? parameters;
+  final List<AgentActionParameter> parameters;
+  final bool allowRepeats;
 
   AgentAction({
     required this.actionId,
@@ -121,31 +270,34 @@ class AgentAction {
     this.onExecuteWithParams,
     this.onExecuteAsync,
     this.onExecuteWithParamsAsync,
-    this.parameters,
-  }) : assert(
+    List<AgentActionParameter>? parameters,
+    this.allowRepeats = false,
+  })  : assert(
           onExecute != null ||
               onExecuteWithParams != null ||
               onExecuteAsync != null ||
               onExecuteWithParamsAsync != null,
           'At least one execute callback must be provided',
-        );
+        ),
+        parameters = List.unmodifiable(parameters ?? const []);
 
   /// Returns a provider-agnostic function declaration map.
   Map<String, dynamic> toFunctionDeclaration() {
-    final props = <String, dynamic>{
-      'count': {
-        'type': 'integer',
-        'description': 'Number of times',
-        'nullable': true,
-      },
-    };
+    final props = <String, dynamic>{};
 
-    if (parameters != null) {
-      for (final entry in parameters!.entries) {
-        props[entry.key] = {
-          'type': entry.value,
-          'description': 'The ${entry.key} parameter',
-        };
+    if (allowRepeats) {
+      props['count'] = {
+        'type': 'integer',
+        'description': 'Number of times to execute (default 1)',
+        'minimum': 1,
+      };
+    }
+
+    final requiredParams = <String>[];
+    for (final param in parameters) {
+      props[param.name] = param.toJsonSchema();
+      if (param.isRequired && !param.nullable) {
+        requiredParams.add(param.name);
       }
     }
 
@@ -155,7 +307,7 @@ class AgentAction {
       'parameters': {
         'type': 'object',
         'properties': props,
-        'required': parameters?.keys.toList() ?? [],
+        'required': requiredParams,
       },
     };
   }
@@ -414,6 +566,12 @@ class AgentService extends ChangeNotifier {
       buffer.writeln('Available actions:');
       for (final action in context.actions) {
         buffer.writeln('- ${action.actionId}: ${action.description}');
+        if (action.parameters.isNotEmpty) {
+          for (final param in action.parameters) {
+            final hint = param.promptHint();
+            buffer.writeln('  • $hint');
+          }
+        }
       }
       buffer.writeln();
     }
@@ -742,13 +900,22 @@ class AgentService extends ChangeNotifier {
       for (final functionCall in llmResponse.functionCalls) {
         final actionId = functionCall.name;
         final args = functionCall.args;
-        final count = (args['count'] as num?)?.toInt() ?? 1;
         final params = Map<String, dynamic>.from(args)..remove('count');
-        _logAction(
-            'LLM called function: $actionId (count: $count) with params: $params');
-
         final action = _actions[actionId];
         if (action != null) {
+          final countParam = (args['count'] as num?)?.toInt();
+          final count = action.allowRepeats && countParam != null
+              ? countParam.clamp(1, 50)
+              : 1;
+          _logAction(
+              'LLM called function: $actionId (count: $count) with params: $params');
+          final validationError = _validateParameters(action, params);
+          if (validationError != null) {
+            _logWarning(
+                'Parameter validation failed for $actionId - $validationError');
+            results.add('Invalid parameters for $actionId: $validationError');
+            continue;
+          }
           final startTime = DateTime.now();
           try {
             for (int i = 0; i < count; i++) {
@@ -812,6 +979,74 @@ class AgentService extends ChangeNotifier {
       _logError('LLM provider error - $e');
       return 'AI error: $e';
     }
+  }
+
+  String? _validateParameters(AgentAction action, Map<String, dynamic> params) {
+    if (action.parameters.isEmpty) return null;
+    final errors = <String>[];
+    final expected = {for (final param in action.parameters) param.name: param};
+
+    for (final param in action.parameters) {
+      final value = params[param.name];
+      if (value == null) {
+        if (param.isRequired && !param.nullable) {
+          errors.add('Missing required parameter "${param.name}"');
+        }
+        continue;
+      }
+
+      final typeError = _validateParameterType(param, value);
+      if (typeError != null) {
+        errors.add(typeError);
+        continue;
+      }
+
+      if (param.enumValues.isNotEmpty) {
+        if (value is! String || !param.enumValues.contains(value)) {
+          errors.add(
+              '"${param.name}" must be one of: ${param.enumValues.join(', ')}');
+        }
+      }
+
+      if ((param.type == AgentParameterType.number ||
+              param.type == AgentParameterType.integer) &&
+          value is num) {
+        if (param.min != null && value < param.min!) {
+          errors.add('"${param.name}" must be ≥ ${param.min}');
+        }
+        if (param.max != null && value > param.max!) {
+          errors.add('"${param.name}" must be ≤ ${param.max}');
+        }
+      }
+    }
+
+    final unknownParams =
+        params.keys.where((key) => !expected.containsKey(key));
+    if (unknownParams.isNotEmpty) {
+      errors.add('Unknown parameters: ${unknownParams.join(', ')}');
+    }
+
+    if (errors.isEmpty) return null;
+    return errors.join('. ');
+  }
+
+  String? _validateParameterType(AgentActionParameter param, Object value) {
+    switch (param.type) {
+      case AgentParameterType.string:
+        if (value is String) return null;
+        break;
+      case AgentParameterType.number:
+        if (value is num) return null;
+        break;
+      case AgentParameterType.integer:
+        if (value is int) return null;
+        if (value is num && value % 1 == 0) return null;
+        break;
+      case AgentParameterType.boolean:
+        if (value is bool) return null;
+        break;
+    }
+    return 'Parameter "${param.name}" must be ${param.type.displayName}';
   }
 
   Future<String> _processWithMock(String query) async {

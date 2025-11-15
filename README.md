@@ -233,12 +233,26 @@ AiActionWidget(
 AiActionWidget(
   actionId: 'update_bio',
   description: 'Update user bio text',
-  parameters: {'bio_text': 'string'},
+  parameters: const [
+    AgentActionParameter.string(
+      name: 'bio_text',
+      description: 'New bio value to save',
+    ),
+  ],
   onExecuteWithParams: (params) {
     final bio = params['bio_text'] as String;
     updateBio(bio);
   },
   child: TextField(),
+)
+
+// Action that can run multiple times per request (count parameter exposed)
+AiActionWidget(
+  actionId: 'tap_increment',
+  description: 'Tap increment button',
+  allowRepeats: true,
+  onExecute: increment,
+  child: IconButton(icon: Icon(Icons.exposure_plus_1)),
 )
 
 // Async action
@@ -485,7 +499,12 @@ apiKey: 'actual-api-key-here'
 ```dart
 AiActionWidget(
   actionId: 'update_profile',
-  parameters: {'bio': 'string'},
+  parameters: const [
+    AgentActionParameter.string(
+      name: 'bio',
+      description: 'New profile bio text',
+    ),
+  ],
   onExecuteWithParams: (params) {
     final bio = params['bio'] as String;
     

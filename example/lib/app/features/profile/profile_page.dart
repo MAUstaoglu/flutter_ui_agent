@@ -227,9 +227,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     actionId: 'update_bio',
                     description:
                         'Update or change the profile bio/description. Specify the new bio text.',
-                    parameters: {
-                      'bio_text': 'string',
-                    },
+                    parameters: const [
+                      AgentActionParameter.string(
+                        name: 'bio_text',
+                        description: 'New bio text to display',
+                      ),
+                    ],
                     immediateRegistration: true,
                     onExecuteWithParams: (params) {
                       // Accept multiple parameter name variations
@@ -301,9 +304,12 @@ class _ProfilePageState extends State<ProfilePage> {
                     actionId: 'update_status',
                     description:
                         'Update or change the current status message. Specify the new status text.',
-                    parameters: {
-                      'status_text': 'string',
-                    },
+                    parameters: const [
+                      AgentActionParameter.string(
+                        name: 'status_text',
+                        description: 'New status message',
+                      ),
+                    ],
                     immediateRegistration: true,
                     onExecuteWithParams: (params) {
                       // Accept multiple parameter name variations

@@ -25,8 +25,12 @@ class AiActionWidget extends StatefulWidget {
   final Future<void> Function(Map<String, dynamic>)? onExecuteWithParamsAsync;
 
   /// Optional: Define parameters that this action accepts
-  /// Example: {'min_price': 'number', 'max_price': 'number', 'location': 'string'}
-  final Map<String, String>? parameters;
+  /// Use [AgentActionParameter] helpers to document enums, ranges, etc.
+  final List<AgentActionParameter> parameters;
+
+  /// Whether the agent can ask to run this action multiple times via the
+  /// optional `count` argument (defaults to false).
+  final bool allowRepeats;
 
   /// The child widget to wrap
   final Widget child;
@@ -44,9 +48,10 @@ class AiActionWidget extends StatefulWidget {
     this.onExecuteAsync,
     this.onExecuteWithParams,
     this.onExecuteWithParamsAsync,
-    this.parameters,
+    this.parameters = const [],
     required this.child,
     this.immediateRegistration = false,
+    this.allowRepeats = false,
   }) : assert(
           onExecute != null ||
               onExecuteAsync != null ||
@@ -100,6 +105,7 @@ class _AiActionWidgetState extends State<AiActionWidget> {
       onExecuteWithParams: widget.onExecuteWithParams,
       onExecuteWithParamsAsync: widget.onExecuteWithParamsAsync,
       parameters: widget.parameters,
+      allowRepeats: widget.allowRepeats,
     );
     _agentService?.registerAction(action);
     _isRegistered = true;

@@ -190,9 +190,21 @@ class _SettingsPageState extends State<SettingsPage> {
           AiActionWidget(
             actionId: 'set_log_level',
             description: 'Change logging level for AI agent',
-            parameters: {
-              'level': 'string', // none, error, warning, info, verbose, debug
-            },
+            parameters: const [
+              AgentActionParameter.string(
+                name: 'level',
+                description:
+                    'Log level: none, error, warning, info, verbose, debug',
+                enumValues: [
+                  'none',
+                  'error',
+                  'warning',
+                  'info',
+                  'verbose',
+                  'debug',
+                ],
+              ),
+            ],
             onExecuteWithParams: (params) {
               final levelStr = params['level'] as String?;
               if (levelStr != null) {
