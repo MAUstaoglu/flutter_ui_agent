@@ -262,6 +262,7 @@ class AgentAction {
   final Future<void> Function(Map<String, dynamic>)? onExecuteWithParamsAsync;
   final List<AgentActionParameter> parameters;
   final bool allowRepeats;
+  final bool isNavigation;
 
   AgentAction({
     required this.actionId,
@@ -272,6 +273,7 @@ class AgentAction {
     this.onExecuteWithParamsAsync,
     List<AgentActionParameter>? parameters,
     this.allowRepeats = false,
+    this.isNavigation = false,
   })  : assert(
           onExecute != null ||
               onExecuteWithParams != null ||
@@ -290,6 +292,14 @@ class AgentAction {
         'type': 'integer',
         'description': 'Number of times to execute (default 1)',
         'minimum': 1,
+      };
+    }
+
+    if (isNavigation) {
+      props['continue_after'] = {
+        'type': 'boolean',
+        'description':
+            'Set to true if the user\'s request implies additional actions after this navigation completes.',
       };
     }
 
@@ -350,7 +360,9 @@ class AgentService extends ChangeNotifier {
   int _failureCount = 0;
   String _currentPage = 'home';
   int _actionCount = 0;
+
   final _actionRegistrationController = StreamController<void>.broadcast();
+  bool _shouldContinueAfterNavigation = false;
 
   List<AgentAction> get actions => _actions.values.toList();
   bool get isProcessing => _isProcessing;
@@ -554,9 +566,17 @@ class AgentService extends ChangeNotifier {
     buffer.writeln(
         '   After navigation, you will receive the same request with new available actions.');
     buffer.writeln(
-        '6. When re-processing after navigation: Call all remaining actions for the original request.');
+        '6. IMPORTANT: Navigation actions have a "continue_after" parameter:');
     buffer.writeln(
-        '7. Prefer calling functions over plain text. If no function matches, explain briefly.');
+        '   - Set continue_after=true if the user wants actions after navigation');
+    buffer.writeln(
+        '   - Set continue_after=false (or omit) for navigation-only requests');
+    buffer.writeln(
+        '   - Example: nav_settings(continue_after=true) for "go to settings and enable wifi"');
+    buffer.writeln(
+        '7. When re-processing after navigation: Call all remaining actions for the original request.');
+    buffer.writeln(
+        '8. Prefer calling functions over plain text. If no function matches, explain briefly.');
     buffer.writeln();
     buffer.writeln('CURRENT CONTEXT:');
     buffer.writeln('Current page: ${context.currentPage}');
@@ -661,6 +681,7 @@ class AgentService extends ChangeNotifier {
     }
     _isProcessing = true;
     _isCancelled = false; // Reset cancellation flag
+    _shouldContinueAfterNavigation = false; // Reset continuation flag
     notifyListeners();
     try {
       // Check if cancelled
@@ -683,56 +704,14 @@ class AgentService extends ChangeNotifier {
         _logSuccess(
             'Navigation detected from $pageBeforeFirst to $pageAfterFirst!');
 
-        // Check if this is ONLY a navigation command (no additional actions needed)
-        final queryLower = query.toLowerCase();
-        final actionKeywords = [
-          'show',
-          'display',
-          'view',
-          'open',
-          'see',
-          'find',
-          'search',
-          'get',
-          'details',
-          'info',
-          'list',
-          'change',
-          'update',
-          'set',
-          'edit',
-          'modify',
-          'add',
-          'create',
-          'delete',
-          'remove',
-          'toggle',
-          'enable',
-          'disable',
-          'select',
-          'choose',
-          'pick',
-          'filter',
-          'sort'
-        ];
-        final hasActionKeyword =
-            actionKeywords.any((keyword) => queryLower.contains(keyword));
-        final hasConjunction =
-            queryLower.contains('then') || queryLower.contains('and');
-        final isShortCommand = queryLower.split(' ').length < 4;
-
-        // Only skip second LLM if:
-        // - Query is very short (e.g., "go to page")
-        // - OR no action keywords and no conjunctions (e.g., "navigate to settings")
-        final isNavigationOnly =
-            isShortCommand || (!hasActionKeyword && !hasConjunction);
-
-        if (isNavigationOnly) {
+        // Check if the LLM signaled to continue
+        if (!_shouldContinueAfterNavigation) {
           _logInfo(
-              'Navigation-only command detected, skipping second LLM request');
+              'Navigation completed. LLM did not request continuation. Stopping.');
           return firstResult;
         }
 
+        _logInfo('LLM requested continuation after navigation.');
         _logInfo('Waiting for new page actions to register...');
         notifyListeners();
 
@@ -900,7 +879,17 @@ class AgentService extends ChangeNotifier {
       for (final functionCall in llmResponse.functionCalls) {
         final actionId = functionCall.name;
         final args = functionCall.args;
-        final params = Map<String, dynamic>.from(args)..remove('count');
+        final params = Map<String, dynamic>.from(args)
+          ..remove('count')
+          ..remove('continue_after');
+
+        // Check if this function call signals continuation
+        if (functionCall.continueAfterNavigation) {
+          _shouldContinueAfterNavigation = true;
+          _logDebug(
+              'Function $actionId signaled continuation after navigation.');
+        }
+
         final action = _actions[actionId];
         if (action != null) {
           final countParam = (args['count'] as num?)?.toInt();

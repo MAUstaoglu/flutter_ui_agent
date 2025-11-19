@@ -8,8 +8,13 @@ import 'agent_service.dart' show ConversationMessage;
 class LlmFunctionCall {
   final String name;
   final Map<String, dynamic> args;
+  final bool continueAfterNavigation;
 
-  LlmFunctionCall(this.name, this.args);
+  LlmFunctionCall(
+    this.name,
+    this.args, {
+    this.continueAfterNavigation = false,
+  });
 }
 
 /// Lightweight response object returned by an LLM provider

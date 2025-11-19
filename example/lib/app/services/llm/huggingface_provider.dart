@@ -121,7 +121,8 @@ class HuggingFaceProvider implements LlmProvider {
 
         final functionCalls = <LlmFunctionCall>[];
         if (toolCallsRaw != null) {
-          for (final call in toolCallsRaw) {
+          for (var i = 0; i < toolCallsRaw.length; i++) {
+            final call = toolCallsRaw[i];
             if (call is Map<String, dynamic>) {
               final function = call['function'] as Map<String, dynamic>?;
               if (function == null) continue;
@@ -144,7 +145,15 @@ class HuggingFaceProvider implements LlmProvider {
                 arguments = rawArguments;
               }
 
-              functionCalls.add(LlmFunctionCall(name, arguments));
+              // Extract the continue_after parameter if present
+              final continueAfter =
+                  arguments['continue_after'] as bool? ?? false;
+
+              functionCalls.add(LlmFunctionCall(
+                name,
+                arguments,
+                continueAfterNavigation: i == 0 && continueAfter,
+              ));
             }
           }
         }

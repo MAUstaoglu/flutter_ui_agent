@@ -108,8 +108,18 @@ class GeminiLlmProvider implements LlmProvider {
     }
 
     // Map Gemini function calls to our generic format
-    final mappedCalls = functionCalls.map((fc) {
-      return LlmFunctionCall(fc.name, fc.args);
+    final mappedCalls = functionCalls.asMap().entries.map((entry) {
+      final index = entry.key;
+      final fc = entry.value;
+
+      // Extract the continue_after parameter if present
+      final continueAfter = fc.args['continue_after'] as bool? ?? false;
+
+      return LlmFunctionCall(
+        fc.name,
+        fc.args,
+        continueAfterNavigation: index == 0 && continueAfter,
+      );
     }).toList();
 
     // Return without requesting follow-up to avoid chat history issues

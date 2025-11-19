@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.0] - 2025-11-19
+
+### ✨ Enhanced Navigation Handling
+- Added `isNavigation` flag to `AgentAction` for better navigation action identification.
+- Introduced `continueAfterNavigation` parameter in `LlmFunctionCall` to allow LLMs to signal intent for post-navigation actions.
+- Improved multi-step command processing by respecting LLM's continuation signals instead of heuristic detection.
+- Updated Gemini and HuggingFace providers to handle the new `continue_after` parameter.
+- Added comprehensive tests for navigation continuation logic.
+
 ## [1.0.0] - 2025-11-15
 
 ### 🚀 First Stable Release

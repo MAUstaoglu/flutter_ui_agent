@@ -5,8 +5,6 @@
 
 Control your Flutter app with natural language. Let AI agents understand and interact with your UI.
 
-**⚠️ Beta Release** - API may evolve before 1.0 stable release.
-
 ---
 
 ## What is Flutter UI Agent?
@@ -32,7 +30,7 @@ Flutter UI Agent lets users control your app using natural language instead of t
 
 - 🧠 **LLM-Agnostic** - Works with Gemini, HuggingFace, OpenAI, Claude, or any LLM
 - 🎯 **Dynamic Actions** - Wrap any widget to make it AI-controllable
-- 🧭 **Smart Navigation** - Automatic page tracking with NavigatorObserver
+- 🧭 **Enhanced Smart Navigation** - Automatic page tracking with intelligent continuation after navigation for complex commands
 - ⚡ **Async Support** - Handle navigation and async operations seamlessly
 - 🔄 **Multi-Step Commands** - Execute complex action sequences
 - 📊 **Analytics** - Track action usage and performance
@@ -46,7 +44,7 @@ Flutter UI Agent lets users control your app using natural language instead of t
 
 ```yaml
 dependencies:
-  flutter_ui_agent: ^0.1.0-beta.1
+  flutter_ui_agent: ^1.1.0
 ```
 
 ### 2. Create an LLM Provider
@@ -78,6 +76,24 @@ class GeminiProvider implements LlmProvider {
   }
 }
 ```
+
+#### LlmProvider Interface
+
+The `LlmProvider` is an abstract interface that allows Flutter UI Agent to work with any LLM. It has two main methods:
+
+- **`configure({required String apiKey, String? modelName})`**: Optional setup method for providers that need API keys or model configuration. Called once during initialization.
+
+- **`send(...)`**: The core method that sends messages to your LLM. It receives:
+  - `systemPrompt`: System-level instructions for the AI
+  - `userMessage`: The composed user message with context and available actions
+  - `tools`: List of function/tool definitions in JSON schema format
+  - `history`: Recent conversation messages for context
+  
+  Returns an `LlmResponse` containing either:
+  - `text`: Plain text response (for conversational replies)
+  - `functionCalls`: List of `LlmFunctionCall` objects representing actions to execute
+
+See the [example implementations](example/lib/app/services/llm/) for Gemini and HuggingFace providers.
 
 ### 3. Setup AgentService
 
